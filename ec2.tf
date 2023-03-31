@@ -75,7 +75,9 @@ resource "aws_instance" "studentvm" {
         for s in local.machine_students[count.index] :
         "powershell.exe -ExecutionPolicy ByPass -File user.ps1 -username ${s.name} -password \"${random_string.student_password[s.index].result}\" -userfull \"${s.fullname}\""
       ],
-      "powershell.exe Remove-Item user.ps1",
+      [
+        "powershell.exe Remove-Item user.ps1",
+      ]
     )
   }
 

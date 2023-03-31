@@ -18,7 +18,7 @@ output "student_config" {
       {
         public_dns   = aws_instance.studentvm[i].public_dns
         name         = s.name
-        password     = resource.random_string.student_password[i].result
+        password     = resource.random_string.student_password[s.index].result
         machine_name = aws_instance.studentvm[i].tags.Name
       }
     ]
