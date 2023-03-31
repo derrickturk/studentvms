@@ -1,9 +1,6 @@
 param(
   [string]$python_installer,
-  [string]$vscode_installer,
-  [string]$username,
-  [string]$password,
-  [string]$userfull
+  [string]$vscode_installer
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,7 +15,3 @@ pip install mypy pytest numpy matplotlib
 Invoke-WebRequest -Uri $vscode_installer -OutFile vscode.exe
 Start-Process "vscode.exe" -argumentlist "/verysilent /mergetasks=!runcode" -wait
 Remove-Item vscode.exe
-
-$password_ss = ConvertTo-SecureString -String $password -AsPlainText -Force
-New-LocalUser $username -Password $password_ss -FullName $userfull -AccountNeverExpires
-Add-LocalGroupMember -Group "Remote Desktop Users" -Member $username

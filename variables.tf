@@ -33,3 +33,8 @@ variable "vscode_installer" {
   type = string
   default = "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64"
 }
+
+variable "student_count" {
+  description = "Number of students; will create one box per two students, rounding up"
+  type = number
+}
