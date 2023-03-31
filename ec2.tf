@@ -1,12 +1,12 @@
 locals {
   machine_count = ceil(var.student_count / 2)
 
-  machine_students = { for i in range(local.machine_count):
+  machine_students = { for i in range(local.machine_count) :
     i =>
-    [ for j in range(i * 2, min(var.student_count, (i + 1) * 2)):
+    [for j in range(i * 2, min(var.student_count, (i + 1) * 2)) :
       {
-        index = j
-        name = "Student${j + 1}"
+        index    = j
+        name     = "Student${j + 1}"
         fullname = "Student ${j + 1}"
       }
     ]
@@ -18,16 +18,16 @@ resource "random_string" "admin_password" {
 }
 
 resource "random_string" "student_password" {
-  count = var.student_count
-  length = 12
+  count   = var.student_count
+  length  = 12
   special = false
 }
 
 data "aws_ami" "latest_windows" {
   most_recent = true
-  owners = ["amazon"]
+  owners      = ["amazon"]
   filter {
-    name = "name"
+    name   = "name"
     values = ["Windows_Server-2022-English-Full-Base-*"]
   }
 }
@@ -35,34 +35,34 @@ data "aws_ami" "latest_windows" {
 resource "aws_instance" "studentvm" {
   count = local.machine_count
 
-  ami = data.aws_ami.latest_windows.id
-  instance_type = var.instance_type
-  key_name = var.keypair_name
+  ami                    = data.aws_ami.latest_windows.id
+  instance_type          = var.instance_type
+  key_name               = var.keypair_name
   vpc_security_group_ids = ["${aws_security_group.studentvm.id}"]
 
   tags = {
-    Name = "studentvm${count.index}"
+    Name  = "studentvm${count.index}"
     Group = "studentvms"
   }
 
   connection {
-    host     = "${self.public_ip}"
+    host     = self.public_ip
     port     = 5986
     type     = "winrm"
     user     = "Administrator"
-    password = "${random_string.admin_password.result}"
+    password = random_string.admin_password.result
     insecure = true
     https    = true
   }
 
   provisioner "file" {
     destination = "setup.ps1"
-    source = "setup.ps1"
+    source      = "setup.ps1"
   }
 
   provisioner "file" {
     destination = "user.ps1"
-    source = "user.ps1"
+    source      = "user.ps1"
   }
 
   provisioner "remote-exec" {
@@ -72,8 +72,8 @@ resource "aws_instance" "studentvm" {
         "powershell.exe Remove-Item setup.ps1",
       ],
       [
-        for s in local.machine_students[count.index]:
-          "powershell.exe -ExecutionPolicy ByPass -File user.ps1 -username ${s.name} -password \"${random_string.student_password[s.index].result}\" -userfull \"${s.fullname}\""
+        for s in local.machine_students[count.index] :
+        "powershell.exe -ExecutionPolicy ByPass -File user.ps1 -username ${s.name} -password \"${random_string.student_password[s.index].result}\" -userfull \"${s.fullname}\""
       ],
       "powershell.exe Remove-Item user.ps1",
     )
@@ -94,29 +94,29 @@ resource "aws_instance" "studentvm" {
 }
 
 resource "aws_security_group" "studentvm" {
-  name = "studentvm"
+  name        = "studentvm"
   description = "RDP and WinRM from specified CIDR block"
 
   # RDP
   ingress {
-    from_port = 3389
-    to_port = 3389
-    protocol = "tcp"
+    from_port   = 3389
+    to_port     = 3389
+    protocol    = "tcp"
     cidr_blocks = [var.student_cidr_block]
   }
 
   # WinRM (HTTP)
   ingress {
-    from_port = 5986
-    to_port = 5986
-    protocol = "tcp"
+    from_port   = 5986
+    to_port     = 5986
+    protocol    = "tcp"
     cidr_blocks = [var.admin_cidr_block]
   }
 
   egress {
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
